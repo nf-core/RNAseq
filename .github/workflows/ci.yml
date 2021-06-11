@@ -33,12 +33,28 @@ jobs:
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
 
-      - name: Run pipeline with test data
-        run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile test,docker
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pytest-workflow
+
+      - name: Run pipeline with default settings
+        run: pytest --tag default --kwdof
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs-default-${{ matrix.nxf_version }}
+          path: |
+            /tmp/pytest_workflow_*/*/.nextflow.log
+            /tmp/pytest_workflow_*/*/log.out
+            /tmp/pytest_workflow_*/*/log.err
 
   star_salmon:
-    name: Test STAR Salmon with workflow parameters
+    name: Test STAR Salmon with ${{ matrix.parameters }}
     if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/rnaseq') }}
     runs-on: ubuntu-latest
     env:
@@ -47,18 +63,18 @@ jobs:
     strategy:
       matrix:
         parameters:
-          - "--skip_qc"
-          - "--remove_ribo_rna"
-          - "--skip_trimming"
-          - "--gtf false"
-          - "--star_index false"
-          - "--transcript_fasta false"
-          - "--min_mapped_reads 90"
-          - "--with_umi"
-          - "--with_umi --skip_trimming"
-          - "--bam_csi_index"
-          - "--save_align_intermeds --save_reference"
-          - "--featurecounts_group_type false"
+          - "skip_qc"
+          - "remove_ribo_rna"
+          - "skip_trimming"
+          - "gtf false"
+          - "star_index false"
+          - "transcript_fasta"
+          - "min_mapped_reads 90"
+          - "with_umi"
+          - "skip_trimming"
+          - "bam_csi_index"
+          - "save_reference"
+          - "featurecounts_group_type"
     steps:
       - name: Check out pipeline code
         uses: actions/checkout@v2
@@ -68,12 +84,29 @@ jobs:
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
 
-      - name: Run pipeline with STAR and various parameters
-        run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile test,docker --aligner star_salmon ${{ matrix.parameters }}
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pytest-workflow
+
+      - name: Run pipeline with STAR Salmon and ${{ matrix.parameters }}
+        run: pytest --tag star --tag salmon --tag "${{ matrix.parameters }}" --kwdof
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs-star_salmon-${{ matrix.parameters }}-${{ matrix.nxf_version }}
+          path: |
+            /tmp/pytest_workflow_*/*/.nextflow.log
+            /tmp/pytest_workflow_*/*/log.out
+            /tmp/pytest_workflow_*/*/log.err
+
 
   star_rsem:
-    name: Test STAR RSEM with workflow parameters
+    name: Test STAR RSEM with ${{ matrix.parameters }}
     if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/rnaseq') }}
     runs-on: ubuntu-latest
     env:
@@ -82,8 +115,8 @@ jobs:
     strategy:
       matrix:
         parameters:
-          - "--skip_qc"
-          - "--rsem_index false"
+          - "skip_qc"
+          - "rsem_index false"
     steps:
       - name: Check out pipeline code
         uses: actions/checkout@v2
@@ -95,12 +128,28 @@ jobs:
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
 
-      - name: Run pipeline with RSEM STAR and various parameters
-        run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile test,docker --aligner star_rsem ${{ matrix.parameters }}
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pytest-workflow
+
+      - name: Run pipeline with STAR RSEM and ${{ matrix.parameters }}
+        run: pytest --tag star --tag rsem --tag "${{ matrix.parameters }}" --kwdof
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs-star_rsem-${{ matrix.parameters }}-${{ matrix.nxf_version }}
+          path: |
+            /tmp/pytest_workflow_*/*/.nextflow.log
+            /tmp/pytest_workflow_*/*/log.out
+            /tmp/pytest_workflow_*/*/log.err
 
   hisat2:
-    name: Test HISAT2 with workflow parameters
+    name: Test HISAT2 with ${{ matrix.parameters }}
     if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/rnaseq') }}
     runs-on: ubuntu-latest
     env:
@@ -109,8 +158,8 @@ jobs:
     strategy:
       matrix:
         parameters:
-          - "--skip_qc"
-          - "--hisat2_index false"
+          - "skip_qc"
+          - "hisat2_index false"
     steps:
       - name: Check out pipeline code
         uses: actions/checkout@v2
@@ -120,12 +169,28 @@ jobs:
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
 
-      - name: Run pipeline with HISAT2 and various parameters
-        run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile test,docker --aligner hisat2 ${{ matrix.parameters }}
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pytest-workflow
+
+      - name: Run pipeline with HISAT2 ${{ matrix.parameters }}
+        run: pytest --tag hisat2 --tag "${{ matrix.parameters }}" --kwdof
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs-hisat2-${{ matrix.parameters }}-${{ matrix.nxf_version }}
+          path: |
+            /tmp/pytest_workflow_*/*/.nextflow.log
+            /tmp/pytest_workflow_*/*/log.out
+            /tmp/pytest_workflow_*/*/log.err
 
   salmon:
-    name: Test Salmon with workflow parameters
+    name: Test Salmon with ${{ matrix.parameters }}
     if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/rnaseq') }}
     runs-on: ubuntu-latest
     env:
@@ -134,8 +199,8 @@ jobs:
     strategy:
       matrix:
         parameters:
-          - "--skip_qc --skip_alignment"
-          - "--salmon_index false --transcript_fasta false"
+          - "skip_qc skip_alignment"
+          - "salmon_index false transcript_fasta false"
     steps:
       - name: Check out pipeline code
         uses: actions/checkout@v2
@@ -145,9 +210,25 @@ jobs:
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
 
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pytest-workflow
+
       - name: Run pipeline with Salmon and various parameters
-        run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile test,docker --pseudo_aligner salmon ${{ matrix.parameters }}
+        run: pytest --tag salmon --tag "${{ matrix.parameters }}" --kwdof
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs-salmon-${{ matrix.parameters }}-${{ matrix.nxf_version }}
+          path: |
+            /tmp/pytest_workflow_*/*/.nextflow.log
+            /tmp/pytest_workflow_*/*/log.out
+            /tmp/pytest_workflow_*/*/log.err
 
   sra_download:
     name: Test downloading of public data
@@ -165,6 +246,23 @@ jobs:
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
 
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pytest-workflow
+
       - name: Run pipeline to download public data
-        run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile test_sra,docker
+        continue-on-error: true
+        run: pytest --tag sra_download --kwdof
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs-sra_download-${{ matrix.nxf_version }}
+          path: |
+            /tmp/pytest_workflow_*/*/.nextflow.log
+            /tmp/pytest_workflow_*/*/log.out
+            /tmp/pytest_workflow_*/*/log.err
